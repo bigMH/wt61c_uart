@@ -10,6 +10,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Empty.h"
 #include "sensor_msgs/Imu.h"
+#include "geometry_msgs/Twist.h"
 #include "tf/LinearMath/Quaternion.h"
 
 #define PI 3.14159
@@ -27,6 +28,7 @@ namespace WTU {
 		
 		std::string topic_pub_;
 		ros::Publisher wt61c_pub_;
+		ros::Publisher wt61c_turtle_;
 	public:
 		Wt61cUart(ros::NodeHandle&);
 		~Wt61cUart();
