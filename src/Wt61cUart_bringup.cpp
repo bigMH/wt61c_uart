@@ -11,7 +11,8 @@ int main(int argc, char** argv)
 
 	WTU::Wt61cUart wt61cuart(n);    //initilize the uart parameter
 	
-	wt61cuart.UartInit();       //declare the uart port
+	while(wt61cuart.UartInit()){
+		sleep(1);}      //declare the uart port
 
 	ros::Rate loop_rate(1000);
 

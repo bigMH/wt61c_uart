@@ -31,7 +31,7 @@ int WTU::Wt61cUart::UartInit() {
 	}
 	catch(serial::IOException& e){
 		ROS_ERROR_STREAM("Unable to open port. Please try again.");
-		return -1;
+		return 1;
 	}
 	//Detects if the port is open
 	if(ser.isOpen()) {
@@ -42,7 +42,7 @@ int WTU::Wt61cUart::UartInit() {
 		return 0;
 	}
 	else
-		return -1;
+		return 1;
 
 }
 
@@ -150,5 +150,5 @@ int WTU::Wt61cUart::TranslateAndPub(){
 	ROS_INFO("The data has been pub.");	
 	wt61c_turtle_.publish(turtle);
 
-	return 0;			
+	return 0;
 }
