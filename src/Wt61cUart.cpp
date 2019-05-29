@@ -1,7 +1,6 @@
 #include "Wt61cUart.h"
-#include "tf/LinearMath/Quaternion.h"
 
-#include <time.h>
+
 //Get parameter from parameter service and initialize the other parameter.
 WTU::Wt61cUart::Wt61cUart( ros::NodeHandle& nh){
 
@@ -109,36 +108,36 @@ int WTU::Wt61cUart::TranslateAndPub(){
 	wt61c_imu.linear_acceleration.x = linear_acceleration[0];
 	wt61c_imu.linear_acceleration.y = linear_acceleration[1];
 	wt61c_imu.linear_acceleration.z = linear_acceleration[2];
-	/*ROS_INFO("wt61c_imu.linear_acceleration.x = %f", wt61c_imu.linear_acceleration.x);
-	ROS_INFO("wt61c_imu.linear_acceleration.y = %f", wt61c_imu.linear_acceleration.y);
-	ROS_INFO("wt61c_imu.linear_acceleration.z = %f", wt61c_imu.linear_acceleration.z);*/
-	
+	// ROS_INFO("wt61c_imu.linear_acceleration.x = %f", wt61c_imu.linear_acceleration.x);
+	// ROS_INFO("wt61c_imu.linear_acceleration.y = %f", wt61c_imu.linear_acceleration.y);
+	// ROS_INFO("wt61c_imu.linear_acceleration.z = %f", wt61c_imu.linear_acceleration.z);
+	// 
 	angular_velocity[0] = (short (UartData_[index_+ 14]<< 8 | UartData_[index_+ 13]))/ 32768.0* 2000* PI/180;
 	angular_velocity[1] = (short (UartData_[index_+ 16]<< 8 | UartData_[index_+ 15]))/ 32768.0* 2000* PI/180;
 	angular_velocity[2] = (short (UartData_[index_+ 18]<< 8 | UartData_[index_+ 17]))/ 32768.0* 2000* PI/180;
 	wt61c_imu.angular_velocity.x = angular_velocity[0];
 	wt61c_imu.angular_velocity.y = angular_velocity[1];
 	wt61c_imu.angular_velocity.z = angular_velocity[2];
-	/*ROS_INFO("wt61c_imu.angular_velocity.x = %f", wt61c_imu.angular_velocity.x);
-	ROS_INFO("wt61c_imu.angular_velocity.y = %f", wt61c_imu.angular_velocity.y);
-	ROS_INFO("wt61c_imu.angular_velocity.z = %f", wt61c_imu.angular_velocity.z);*/
+	// ROS_INFO("wt61c_imu.angular_velocity.x = %f", wt61c_imu.angular_velocity.x);
+	// ROS_INFO("wt61c_imu.angular_velocity.y = %f", wt61c_imu.angular_velocity.y);
+	// ROS_INFO("wt61c_imu.angular_velocity.z = %f", wt61c_imu.angular_velocity.z);
 	
 	orientation[0] = (short(UartData_[index_+ 25]<< 8 | UartData_[index_+ 24]))/ 32768.0* 2000* PI/180;
 	orientation[1] = (short(UartData_[index_+ 27]<< 8 | UartData_[index_+ 26]))/ 32768.0* 2000* PI/180;
 	orientation[2] = (short(UartData_[index_+ 29]<< 8 | UartData_[index_+ 28]))/ 32768.0* 2000* PI/180;
-	/*wt61c_imu.orientation.x = sin(orientation[0]/2)* cos(orientation[1]/2)* cos(orientation[2]/2)- cos(orientation[0]/2)* sin(orientation[1]/2)* sin(orientation[2]/2);
-	wt61c_imu.orientation.y = sin(orientation[0]/2)* cos(orientation[1]/2)* sin(orientation[2]/2)+ cos(orientation[0]/2)* sin(orientation[1]/2)* cos(orientation[2]/2);
-	wt61c_imu.orientation.z = cos(orientation[0]/2)* cos(orientation[1]/2)* sin(orientation[2]/2)- sin(orientation[0]/2)* sin(orientation[1]/2)* cos(orientation[2]/2);
-	wt61c_imu.orientation.w = cos(orientation[0]/2)* cos(orientation[1]/2)* cos(orientation[2]/2)+ sin(orientation[0]/2)* sin(orientation[1]/2)* sin(orientation[2]/2);*/
+	// wt61c_imu.orientation.x = sin(orientation[0]/2)* cos(orientation[1]/2)* cos(orientation[2]/2)- cos(orientation[0]/2)* sin(orientation[1]/2)* sin(orientation[2]/2);
+	// wt61c_imu.orientation.y = sin(orientation[0]/2)* cos(orientation[1]/2)* sin(orientation[2]/2)+ cos(orientation[0]/2)* sin(orientation[1]/2)* cos(orientation[2]/2);
+	// wt61c_imu.orientation.z = cos(orientation[0]/2)* cos(orientation[1]/2)* sin(orientation[2]/2)- sin(orientation[0]/2)* sin(orientation[1]/2)* cos(orientation[2]/2);
+	// wt61c_imu.orientation.w = cos(orientation[0]/2)* cos(orientation[1]/2)* cos(orientation[2]/2)+ sin(orientation[0]/2)* sin(orientation[1]/2)* sin(orientation[2]/2);
 	quate.setRPY(orientation[0], orientation[1], orientation[2]);
 	wt61c_imu.orientation.x = quate[0];
 	wt61c_imu.orientation.y = quate[1];
 	wt61c_imu.orientation.z = quate[2];
 	wt61c_imu.orientation.w = quate[3];
-	/*ROS_INFO("wt61c_imu.orientation.x = %f", wt61c_imu.orientation.x);
-	ROS_INFO("wt61c_imu.orientation.y = %f", wt61c_imu.orientation.y);
-	ROS_INFO("wt61c_imu.orientation.z = %f", wt61c_imu.orientation.z);
-	ROS_INFO("wt61c_imu.orientation.w = %f", wt61c_imu.orientation.w);*/
+	// ROS_INFO("wt61c_imu.orientation.x = %f", wt61c_imu.orientation.x);
+	// ROS_INFO("wt61c_imu.orientation.y = %f", wt61c_imu.orientation.y);
+	// ROS_INFO("wt61c_imu.orientation.z = %f", wt61c_imu.orientation.z);
+	// ROS_INFO("wt61c_imu.orientation.w = %f", wt61c_imu.orientation.w);
 
 	wt61c_pub_.publish(wt61c_imu);
 
@@ -150,6 +149,3 @@ int WTU::Wt61cUart::TranslateAndPub(){
 
 	return 0;			
 }
-
-
-	
