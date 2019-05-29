@@ -140,6 +140,10 @@ src/Wt61cUart_bringup.cpp
 src/Wt61cUart.cpp
 )
 
+add_executable(test_sub
+src/test_sub.cpp
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -152,6 +156,9 @@ src/Wt61cUart.cpp
 add_dependencies(Wt61cUart_bringup
 ${catkin_EXPORTED_TARGETS})
 
+add_dependencies(test_sub
+${catkin_EXPORTED_TARGETS}
+)
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
@@ -160,6 +167,9 @@ target_link_libraries(Wt61cUart_bringup
 ${catkin_LIBRARIES}
 )
 
+target_link_libraries(test_sub
+${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

@@ -1,13 +1,15 @@
 #include "Wt61cUart.h"
+#include "tf/LinearMath/Quaternion.h"
 
+#include <time.h>
 //Get parameter from parameter service and initialize the other parameter.
 WTU::Wt61cUart::Wt61cUart( ros::NodeHandle& nh){
 
-	nh.getParamCached("uart_com", com_);
-	nh.getParamCached("uart_baudrate",baudrate_);
-	nh.getParamCached("g", g_);
-	nh.getParamCached("PI", PI_);
+	nh.getParamCached("/sensor_uart/uart_com", com_);
+	nh.getParamCached("/sensor_uart/uart_baudrate",baudrate_);
+	nh.getParamCached("/sensor_uart/g", g_);
 	nh.getParamCached("topic_pub", topic_pub_);
+	index_ = 0;
 
 	//delcare the pub object
 	wt61c_pub_ = nh.advertise<sensor_msgs::Imu>(topic_pub_, 1);
@@ -24,7 +26,7 @@ int WTU::Wt61cUart::UartInit() {
 		
 		ser.setPort(com_);
 	
-		ser.setBaudrate(baudrate_*100);
+		ser.setBaudrate(baudrate_);
 		serial::Timeout to = serial::Timeout::simpleTimeout(1000);
 		ser.setTimeout(to);
 		ser.open();                           // try to open the port
@@ -35,7 +37,10 @@ int WTU::Wt61cUart::UartInit() {
 	}
 	//Detects if the port is open
 	if(ser.isOpen()) {
+		//ser.flushInput();
 		ROS_INFO_STREAM("The port initialize succeed.");
+		ser.flushInput();
+		sleep(0.1);
 		return 0;
 	}
 	else
@@ -43,76 +48,108 @@ int WTU::Wt61cUart::UartInit() {
 
 }
 
-//read data function
-int WTU::Wt61cUart::GetData () {
 
-	if(ser.available()) {
+// read data function
+int WTU::Wt61cUart::GetAndCheck() {
 
-		//read date from port
-		ser.read(UartData_, ser.available());
-		//test output a package
-		/*ROS_INFO("/%04x/%04x/%04x/",UartData_[0], UartData_[1], UartData_[2]);
-		ROS_INFO("/%04x/%04x/%04x/",UartData_[3], UartData_[4], UartData_[5]);
-		ROS_INFO("/%04x/%04x/%04x/",UartData_[6], UartData_[7], UartData_[8]);
-		ROS_INFO("/%04x/%04x/%04x/",UartData_[9], UartData_[10], UartData_[11]);*/
+	int i,j;
+	int sum = 0x55;
+
+	while(UartData_.size()-index_<33){
+		while(ser.available()<33){ROS_INFO("wait");}
+		ser.read(UartData_,ser.available());
 	}
-	return 0;
-}
-
-//Analytical data function
-int WTU::Wt61cUart::TranslateAndPub() {
-
-	int i;
-	sensor_msgs::Imu wt61c_imu;   //declare the pub message
-
-	for (int i = 0; i < 3; ++i) {
-
-		if(UartData_[i*11] == 0x55) {
-			switch(UartData_[i*11+1]) {
-				case 0x51:
-				wt61c_imu.linear_acceleration.x = ((UartData_[i* 11+ 3]<< 8) | UartData_[i *11+ 2])/ 32768* 16* g_;
-				wt61c_imu.linear_acceleration.y = ((UartData_[i* 11+ 5]<< 8) | UartData_[i *11+ 4])/ 32768* 16* g_;
-				wt61c_imu.linear_acceleration.z = ((UartData_[i* 11+ 7]<< 8) | UartData_[i *11+ 6])/ 32768* 16* g_;
-
-				break;
-				case 0x52:
-				wt61c_imu.angular_velocity.x = ((UartData_[i* 11+ 3]<< 8) | UartData_[i *11+ 2])/ 32768* 2000* PI_/180;
-				wt61c_imu.angular_velocity.y = ((UartData_[i* 11+ 5]<< 8) | UartData_[i *11+ 4])/ 32768* 2000* PI_/180;
-				wt61c_imu.angular_velocity.z = ((UartData_[i* 11+ 7]<< 8) | UartData_[i *11+ 6])/ 32768* 2000* PI_/180;
-				break;
-				case 0x53:
-				wt61c_imu.orientation.x = ((UartData_[i* 11+ 3]<< 8) | UartData_[i *11+ 2])/ 32768* 2000* PI_/180;
-				wt61c_imu.orientation.y = ((UartData_[i* 11+ 5]<< 8) | UartData_[i *11+ 4])/ 32768* 2000* PI_/180;
-				wt61c_imu.orientation.z = ((UartData_[i* 11+ 7]<< 8) | UartData_[i *11+ 6])/ 32768* 2000* PI_/180;
-				break;
+	while(true){
+		if(UartData_[index_] ==0x55 & UartData_[index_+1] ==0x51){
+			//SRC check
+			for (i= 1; i<10; i++)
+				sum+= UartData_[index_+i];
+			if(UartData_[index_+10] == sum%0x100)
+				j = 1;
+			sum = 0x55;
+			for (i= 12; i<21; i++)
+				sum+= UartData_[index_+i];
+			if(UartData_[index_+21] == sum%0x100)
+				j++;
+			sum = 0x55;
+			for (i= 23; i<32; i++)
+				sum+= UartData_[index_+i];
+			if(UartData_[index_+32] == sum%0x100)
+				j++;
+			if (j = 3){
+				ROS_INFO("Yes,I got a complete package.");
+				return 0;
+			}
+			else{
+				sum = 0x55;
+				index_++;
 			}
 		}
 		else
-			break;
-	}
-	wt61c_pub_.publish(wt61c_imu);	
+			index_++;
+		while(UartData_.size()-index_-32<33){
+			while(ser.available()<33){}
+			ser.read(UartData_,ser.available());
+		}
+	}	
+}
+
+// translate UartDate to Imu date,and pub
+int WTU::Wt61cUart::TranslateAndPub(){
+	sensor_msgs::Imu wt61c_imu;                //declare the pub message
+	double linear_acceleration[2],angular_velocity[2],orientation[2];
+
+	wt61c_imu.header.stamp = ros::Time::now();
+	wt61c_imu.header.frame_id = "wt61c_uart";
+	tf::Quaternion quate;
+
+	linear_acceleration[0] = ( short (UartData_[index_+ 3]<< 8 | UartData_[index_+ 2]))/ 32768.0* 16.0* 9.8;
+	linear_acceleration[1] = ( short (UartData_[index_+ 5]<< 8 | UartData_[index_+ 4]))/ 32768.0* 16.0* 9.8;
+	linear_acceleration[2] = ( short (UartData_[index_+ 7]<< 8 | UartData_[index_+ 6]))/ 32768.0* 16.0* 9.8;
+	wt61c_imu.linear_acceleration.x = linear_acceleration[0];
+	wt61c_imu.linear_acceleration.y = linear_acceleration[1];
+	wt61c_imu.linear_acceleration.z = linear_acceleration[2];
+	/*ROS_INFO("wt61c_imu.linear_acceleration.x = %f", wt61c_imu.linear_acceleration.x);
+	ROS_INFO("wt61c_imu.linear_acceleration.y = %f", wt61c_imu.linear_acceleration.y);
+	ROS_INFO("wt61c_imu.linear_acceleration.z = %f", wt61c_imu.linear_acceleration.z);*/
+	
+	angular_velocity[0] = (short (UartData_[index_+ 14]<< 8 | UartData_[index_+ 13]))/ 32768.0* 2000* PI/180;
+	angular_velocity[1] = (short (UartData_[index_+ 16]<< 8 | UartData_[index_+ 15]))/ 32768.0* 2000* PI/180;
+	angular_velocity[2] = (short (UartData_[index_+ 18]<< 8 | UartData_[index_+ 17]))/ 32768.0* 2000* PI/180;
+	wt61c_imu.angular_velocity.x = angular_velocity[0];
+	wt61c_imu.angular_velocity.y = angular_velocity[1];
+	wt61c_imu.angular_velocity.z = angular_velocity[2];
+	/*ROS_INFO("wt61c_imu.angular_velocity.x = %f", wt61c_imu.angular_velocity.x);
+	ROS_INFO("wt61c_imu.angular_velocity.y = %f", wt61c_imu.angular_velocity.y);
+	ROS_INFO("wt61c_imu.angular_velocity.z = %f", wt61c_imu.angular_velocity.z);*/
+	
+	orientation[0] = (short(UartData_[index_+ 25]<< 8 | UartData_[index_+ 24]))/ 32768.0* 2000* PI/180;
+	orientation[1] = (short(UartData_[index_+ 27]<< 8 | UartData_[index_+ 26]))/ 32768.0* 2000* PI/180;
+	orientation[2] = (short(UartData_[index_+ 29]<< 8 | UartData_[index_+ 28]))/ 32768.0* 2000* PI/180;
+	/*wt61c_imu.orientation.x = sin(orientation[0]/2)* cos(orientation[1]/2)* cos(orientation[2]/2)- cos(orientation[0]/2)* sin(orientation[1]/2)* sin(orientation[2]/2);
+	wt61c_imu.orientation.y = sin(orientation[0]/2)* cos(orientation[1]/2)* sin(orientation[2]/2)+ cos(orientation[0]/2)* sin(orientation[1]/2)* cos(orientation[2]/2);
+	wt61c_imu.orientation.z = cos(orientation[0]/2)* cos(orientation[1]/2)* sin(orientation[2]/2)- sin(orientation[0]/2)* sin(orientation[1]/2)* cos(orientation[2]/2);
+	wt61c_imu.orientation.w = cos(orientation[0]/2)* cos(orientation[1]/2)* cos(orientation[2]/2)+ sin(orientation[0]/2)* sin(orientation[1]/2)* sin(orientation[2]/2);*/
+	quate.setRPY(orientation[0], orientation[1], orientation[2]);
+	wt61c_imu.orientation.x = quate[0];
+	wt61c_imu.orientation.y = quate[1];
+	wt61c_imu.orientation.z = quate[2];
+	wt61c_imu.orientation.w = quate[3];
+	/*ROS_INFO("wt61c_imu.orientation.x = %f", wt61c_imu.orientation.x);
+	ROS_INFO("wt61c_imu.orientation.y = %f", wt61c_imu.orientation.y);
+	ROS_INFO("wt61c_imu.orientation.z = %f", wt61c_imu.orientation.z);
+	ROS_INFO("wt61c_imu.orientation.w = %f", wt61c_imu.orientation.w);*/
+
+	wt61c_pub_.publish(wt61c_imu);
+
+	//delate the old date	
+	index_ =index_+ 32;
+	UartData_.erase(UartData_.begin(),UartData_.begin()+index_);
+	index_ = 0;
 	ROS_INFO("The data has been pub.");	
 
 	return 0;			
 }
 
 
-//check data function 
-//if the data is right ,return true, wrong ,false
-bool WTU::Wt61cUart::CheckData(){
-	int pkg, index, sum;
-	bool cheak_result;
-	for (int pkg = 0; pkg < 3; )
-	{
-		sum = 0;
-		for (int index = 0; index < 10; index++)
-		{
-			sum += UartData_[pkg*11+index];
-		}
-		if (UartData_[pkg*11+10] == sum%0x100)
-			pkg++;
-		else
-			return false;
-	}
-	return true;
-}
+	

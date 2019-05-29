@@ -2,14 +2,14 @@
 
 <launch>
 
-	<!--  upload the parameter to parameter service  -->
-	<!--  define the "uart_com" to appoint the port  -->
-	<param name = "uart_com" type = "string" value = "/dev/ttyUSB0"/>
-	<!--  parameter "uart_baudrate" is baudrate/100  -->
-	<param name = "uart_baudrate" type = "int" value = "1152"/>
-	<param name = "g" type = "double" value = "9.8"/>
-	<param name = "PI" type = "double" value = "3.1415926"/>
 	<param name = "topic_pub" type = "string" value = "orientation_acceleration"/>
+	
+
 	<!--  wt61c uart node  -->
-	<node pkg = "wt61c_uart" type = "Wt61cUart_bringup" name = "sensor_uart" output = "screen"/>
+	<node pkg = "wt61c_uart" type = "Wt61cUart_bringup" name = "sensor_uart" output = "screen">
+		<param name = "uart_baudrate" type = "int" value = "115200"/>
+		<param name = "g" type = "double" value = "9.8"/>
+		<param name = "uart_com" type = "string" value = "/dev/wt61c_link"/>
+	</node>
+
 </launch>
