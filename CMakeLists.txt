@@ -135,9 +135,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/wt61c_uart_node.cpp)
-add_executable(Wt61cUart_bringup
-src/Wt61cUart_bringup.cpp
-src/Wt61cUart.cpp
+add_executable(wt61c_uart_node
+src/wt61c_uart_node.cpp
+src/wt61c_uart.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -149,7 +149,7 @@ src/Wt61cUart.cpp
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(Wt61cUart_bringup
+add_dependencies(wt61c_uart_node
 ${catkin_EXPORTED_TARGETS}
 )
 
@@ -157,7 +157,7 @@ ${catkin_EXPORTED_TARGETS}
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(Wt61cUart_bringup
+target_link_libraries(wt61c_uart_node
 ${catkin_LIBRARIES}
 )
 

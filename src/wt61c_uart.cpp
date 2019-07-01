@@ -1,4 +1,4 @@
-#include "Wt61cUart.h"
+#include "wt61c_uart.h"
 
 WTU::Wt61cUart::Wt61cUart( ros::NodeHandle& nh){
 //Get parameter from parameter service and initialize the other parameter.
@@ -10,12 +10,12 @@ WTU::Wt61cUart::Wt61cUart( ros::NodeHandle& nh){
 
 	//delcare the pub object
 	wt61c_pub_ = nh.advertise<sensor_msgs::Imu>(topic_pub_, 1);
-	wt61c_turtle_ = nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1);
+	// wt61c_turtle_ = nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1);
 }
 //
 WTU::Wt61cUart::~Wt61cUart(){
 	ser.close();
-	ROS_INFO("The Uart port has been closed.");
+	std::cout<< "The Uart port has been closed."<<std::endl;
 }
 
 		//initialize the UART port.
@@ -53,12 +53,12 @@ int WTU::Wt61cUart::GetAndCheck() {
 	int i,j;
 	int sum = 0x55;
 
-	while(UartData_.size()-index_<33){
+	while(UartData_.size()-index_<33) {
 		while(ser.available()<33){ROS_INFO("wait");}
 		ser.read(UartData_,ser.available());
 	}
-	while(true){
-		if(UartData_[index_] ==0x55 && UartData_[index_+1] ==0x51){
+	while(true) {
+		if(UartData_[index_] ==0x55 && UartData_[index_+1] ==0x51) {
 			//SRC check
 			for (i= 1; i<10; i++)
 				sum+= UartData_[index_+i];
@@ -74,28 +74,28 @@ int WTU::Wt61cUart::GetAndCheck() {
 				sum+= UartData_[index_+i];
 			if(UartData_[index_+32] == sum%0x100)
 				j++;
-			if (j = 3){
+			if (j = 3) {
 				ROS_INFO("Yes,I got a complete package.");
 				return 0;
 			}
-			else{
+			else {
 				sum = 0x55;
 				index_++;
 			}
 		}
 		else
 			index_++;
-		while(UartData_.size()-index_-32<33){
-			while(ser.available()<33){}
+		while(UartData_.size()-index_-32<33) {
+			while(ser.available()<33) {}
 			ser.read(UartData_,ser.available());
 		}
 	}	
 }
 
 // translate UartDate to Imu date,and pub
-int WTU::Wt61cUart::TranslateAndPub(){
+int WTU::Wt61cUart::TranslateAndPub() {
 	sensor_msgs::Imu wt61c_imu;                //declare the pub message
-	geometry_msgs::Twist turtle;
+	// geometry_msgs::Twist turtle;
 	double linear_acceleration[2],angular_velocity[2],orientation[2];
 
 	wt61c_imu.header.stamp = ros::Time::now();
@@ -134,8 +134,8 @@ int WTU::Wt61cUart::TranslateAndPub(){
 	wt61c_imu.orientation.y = quate[1];
 	wt61c_imu.orientation.z = quate[2];
 	wt61c_imu.orientation.w = quate[3];
-	turtle.linear.x = orientation[0]*(-1);
-	turtle.angular.z = orientation[1]*(-1);
+	// turtle.linear.x = orientation[0]*(-1);
+	// turtle.angular.z = orientation[1]*(-1);
 	// ROS_INFO("wt61c_imu.orientation.x = %f", wt61c_imu.orientation.x);
 	// ROS_INFO("wt61c_imu.orientation.y = %f", wt61c_imu.orientation.y);
 	// ROS_INFO("wt61c_imu.orientation.z = %f", wt61c_imu.orientation.z);
@@ -148,7 +148,7 @@ int WTU::Wt61cUart::TranslateAndPub(){
 	UartData_.erase(UartData_.begin(),UartData_.begin()+index_);
 	index_ = 0;
 	ROS_INFO("The data has been pub.");	
-	wt61c_turtle_.publish(turtle);
+	// wt61c_turtle_.publish(turtle);
 
 	return 0;
 }
