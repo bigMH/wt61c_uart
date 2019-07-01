@@ -22,8 +22,5 @@ int main(int argc, char** argv)
 		
 		loop_rate.sleep();
 	}
-
-	wt61cuart.~Wt61cUart();
-
 	return 0;
 }

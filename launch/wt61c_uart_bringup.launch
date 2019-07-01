@@ -1,10 +1,8 @@
 <?xml version = "1.0" encoding = "UTF-8"?>
 <launch>
 	<param name = "topic_pub" type = "string" value = "orientation_acceleration"/>
-	<!--  turtle ndoe  -->
-	<node pkg = "turtlesim" type = "turtlesim_node" name = "turtle"/>
 	<!--  wt61c uart node  -->
-	<node pkg = "wt61c_uart" type = "Wt61cUart_bringup" name = "sensor_uart" output = "screen">
+	<node pkg = "wt61c_uart" type = "wt61c_uart_node" name = "sensor_uart" output = "screen">
 		<param name = "uart_baudrate" type = "int" value = "115200"/>
 		<param name = "g" type = "double" value = "9.8"/>
 		<param name = "uart_com" type = "string" value = "/dev/wt61c_link"/>
